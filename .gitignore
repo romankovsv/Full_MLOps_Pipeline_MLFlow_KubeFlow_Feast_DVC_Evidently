@@ -31,3 +31,4 @@ wandb/
 
 # DVC local cache (must not be in Git)
 .dvc/cache/
+/sample.txt
