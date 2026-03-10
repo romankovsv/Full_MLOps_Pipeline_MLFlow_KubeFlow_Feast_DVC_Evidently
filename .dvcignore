@@ -1,3 +1,44 @@
-# Add patterns of files dvc should ignore, which could improve
-# the performance. Learn more at
-# https://dvc.org/doc/user-guide/dvcignore
+# ---------------------------
+# OS / editor noise
+# ---------------------------
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ---------------------------
+# Python cache / env
+# ---------------------------
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ipynb_checkpoints/
+.venv/
+venv/
+env/
+
+# ---------------------------
+# Logs / runtime temp
+# ---------------------------
+logs/
+*.log
+tmp/
+temp/
+
+# ---------------------------
+# Local experiment artifacts
+# (you store artifacts in MinIO, so ignore local leftovers)
+# ---------------------------
+mlruns/
+mlartifacts/
+wandb/
+
+# ---------------------------
+# Notebook / tooling checkpoints
+# ---------------------------
+.jupyter/

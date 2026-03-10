@@ -1,0 +1,33 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ipynb_checkpoints/
+.venv/
+venv/
+env/
+
+# Logs / temp
+logs/
+*.log
+tmp/
+temp/
+
+# Local experiment outputs
+mlruns/
+mlartifacts/
+wandb/
+
+# DVC local cache (must not be in Git)
+.dvc/cache/
