@@ -1,0 +1,14 @@
+mode: standalone
+
+rootUser: admin
+rootPassword: admin12345
+
+persistence:
+  enabled: true
+  size: 2Gi
+
+resources:
+  requests:
+    memory: 2Gi
+  limits:
+    memory: 4Gi
