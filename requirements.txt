@@ -1,0 +1,6 @@
+pandas==2.2.3
+numpy==1.26.4
+mlflow==2.22.1
+evidently==0.4.39
+dvc[s3]==3.66.1
+feast[redis,aws]
