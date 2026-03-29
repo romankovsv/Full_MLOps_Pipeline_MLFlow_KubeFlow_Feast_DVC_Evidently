@@ -9,6 +9,6 @@ offline_store:
 
 online_store:
   type: redis
-  connection_string: feast-redis-master.mlops.svc.cluster.local:6379
+  connection_string: redis-master.mlops.svc.cluster.local:6379
 
 entity_key_serialization_version: 2

@@ -1,32 +1,36 @@
-                Kubeflow Pipelines
-                       │
-                       ▼
-                 Model Training
-                       │
-           ┌───────────┴───────────┐
-           ▼                       ▼
-        MLflow                Feature Store
-           │                       │
-           ▼                       ▼
-       PostgreSQL                Feast
-           │                       │
-           └───────────┬───────────┘
-                       ▼
-                     MinIO
-                       │
-                       ▼
-                      DVC
-                       │
-                       ▼
-               Drift Monitoring
-                   Evidently
-                       │
-                       ▼
-              Prometheus + Grafana
 
 
-____________________________________________________________________________
-
+Kubeflow Pipelines
+       │
+       ▼
+ Model Training
+       │
+ ┌─────┴─────────┐
+ ▼               ▼
+MLflow      Feature Store
+ │               │
+ ▼               ▼
+PostgreSQL   Feast
+                 │
+      ┌──────────┴──────────┐
+      ▼                     ▼
+Offline Store         Online Store
+   (File)                (Redis)
+      │                     │
+      └──────────┬──────────┘
+                 ▼
+               MinIO
+              /  |  \
+             ▼   ▼   ▼
+         DVC   MLflow Artifacts
+                 │
+                 ▼
+         Drift Monitoring
+             Evidently
+                 │
+                 ▼
+        Prometheus + Grafana
+____________________________________________________________________________________
 
 colima start --arch x86_64 --vm-type qemu --cpu 7 --memory 13 --disk 20
 

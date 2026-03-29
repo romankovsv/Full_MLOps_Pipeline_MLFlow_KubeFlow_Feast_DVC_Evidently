@@ -1,0 +1,76 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: feast-config
+  namespace: mlops
+data:
+  feature_store.yaml: |
+    project: mlops_project
+    registry:
+      registry_store_type: S3RegistryStore
+      path: s3://feast-registry/registry.db
+      s3_endpoint_override: http://minio.mlops.svc.cluster.local:9000
+    provider: aws
+    offline_store:
+      type: file
+    online_store:
+      type: redis
+      connection_string: redis-master.mlops.svc.cluster.local:6379
+    entity_key_serialization_version: 2
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: feast-server
+  namespace: mlops
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: feast-server
+  template:
+    metadata:
+      labels:
+        app: feast-server
+    spec:
+      containers:
+        - name: feast-server
+          image: feastdev/feature-server:0.40.1
+          command: ["feast", "serve", "--host", "0.0.0.0", "--port", "6566"]
+          workingDir: /feature_repo
+          ports:
+            - containerPort: 6566
+          env:
+            - name: AWS_ACCESS_KEY_ID
+              value: "admin"
+            - name: AWS_SECRET_ACCESS_KEY
+              value: "admin12345"
+            - name: AWS_ENDPOINT_URL
+              value: "http://minio.mlops.svc.cluster.local:9000"
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          volumeMounts:
+            - name: feast-config
+              mountPath: /feature_repo/feature_store.yaml
+              subPath: feature_store.yaml
+      volumes:
+        - name: feast-config
+          configMap:
+            name: feast-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: feast-server
+  namespace: mlops
+spec:
+  selector:
+    app: feast-server
+  ports:
+    - port: 6566
+      targetPort: 6566
