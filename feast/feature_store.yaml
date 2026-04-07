@@ -1,0 +1,12 @@
+project: mlops_project
+registry:
+  registry_store_type: S3RegistryStore
+  path: s3://feast-registry/registry.db
+  s3_endpoint_override: http://127.0.0.1:9000
+provider: aws
+offline_store:
+  type: file 
+online_store:
+  type: redis
+  connection_string: "127.0.0.1:6379"
+entity_key_serialization_version: 3

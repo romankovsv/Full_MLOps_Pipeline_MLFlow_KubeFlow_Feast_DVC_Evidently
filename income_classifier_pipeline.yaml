@@ -1,0 +1,340 @@
+# PIPELINE DEFINITION
+# Name: income-classifier-pipeline
+# Description: A Kubeflow pipeline to classify income categories using KFP v2
+# Inputs:
+#    access_key: str
+#    entity_df_bucket: str
+#    entity_df_filename: str
+#    feature_list: str
+#    feature_store_bucket_name: str
+#    feature_store_config_file_name: str
+#    minio_host: str
+#    mlflow_host: str
+#    model_name: str
+#    model_stage: str
+#    model_type: str
+#    output_bucket: str
+#    output_file_name: str
+#    secret_key: str
+components:
+  comp-model-inference:
+    executorLabel: exec-model-inference
+    inputDefinitions:
+      artifacts:
+        input_data:
+          artifactType:
+            schemaTitle: system.Dataset
+            schemaVersion: 0.0.1
+      parameters:
+        access_key:
+          parameterType: STRING
+        minio_host:
+          parameterType: STRING
+        mlflow_host:
+          parameterType: STRING
+        model_name:
+          parameterType: STRING
+        model_stage:
+          parameterType: STRING
+        model_type:
+          parameterType: STRING
+        secret_key:
+          parameterType: STRING
+    outputDefinitions:
+      artifacts:
+        data_output:
+          artifactType:
+            schemaTitle: system.Dataset
+            schemaVersion: 0.0.1
+  comp-read-data-from-minio:
+    executorLabel: exec-read-data-from-minio
+    inputDefinitions:
+      parameters:
+        access_key:
+          parameterType: STRING
+        bucket_name:
+          parameterType: STRING
+        file_name:
+          parameterType: STRING
+        minio_host:
+          parameterType: STRING
+        secret_key:
+          parameterType: STRING
+    outputDefinitions:
+      artifacts:
+        data_output:
+          artifactType:
+            schemaTitle: system.Dataset
+            schemaVersion: 0.0.1
+  comp-retrieve-features-from-feast:
+    executorLabel: exec-retrieve-features-from-feast
+    inputDefinitions:
+      artifacts:
+        entity_df:
+          artifactType:
+            schemaTitle: system.Dataset
+            schemaVersion: 0.0.1
+      parameters:
+        access_key:
+          parameterType: STRING
+        bucket_name:
+          parameterType: STRING
+        feature_list:
+          parameterType: STRING
+        file_name:
+          parameterType: STRING
+        minio_host:
+          parameterType: STRING
+        secret_key:
+          parameterType: STRING
+    outputDefinitions:
+      artifacts:
+        data_output:
+          artifactType:
+            schemaTitle: system.Dataset
+            schemaVersion: 0.0.1
+  comp-write-data-to-minio:
+    executorLabel: exec-write-data-to-minio
+    inputDefinitions:
+      artifacts:
+        input_data:
+          artifactType:
+            schemaTitle: system.Artifact
+            schemaVersion: 0.0.1
+      parameters:
+        access_key:
+          parameterType: STRING
+        bucket_name:
+          parameterType: STRING
+        file_name:
+          parameterType: STRING
+        minio_host:
+          parameterType: STRING
+        secret_key:
+          parameterType: STRING
+deploymentSpec:
+  executors:
+    exec-model-inference:
+      container:
+        command:
+        - python3
+        - /app/src/run_inference/run_inference.py
+        - --minio_host
+        - '{{$.inputs.parameters[''minio_host'']}}'
+        - --access_key
+        - '{{$.inputs.parameters[''access_key'']}}'
+        - --secret_key
+        - '{{$.inputs.parameters[''secret_key'']}}'
+        - --model_name
+        - '{{$.inputs.parameters[''model_name'']}}'
+        - --model_type
+        - '{{$.inputs.parameters[''model_type'']}}'
+        - --model_stage
+        - '{{$.inputs.parameters[''model_stage'']}}'
+        - --mlflow_host
+        - '{{$.inputs.parameters[''mlflow_host'']}}'
+        - --input_data
+        - '{{$.inputs.artifacts[''input_data''].path}}'
+        - --data_output
+        - '{{$.outputs.artifacts[''data_output''].path}}'
+        image: svromankov/run-inference:latest
+    exec-read-data-from-minio:
+      container:
+        command:
+        - python3
+        - /app/src/read_data/read_data.py
+        - --minio_host
+        - '{{$.inputs.parameters[''minio_host'']}}'
+        - --access_key
+        - '{{$.inputs.parameters[''access_key'']}}'
+        - --secret_key
+        - '{{$.inputs.parameters[''secret_key'']}}'
+        - --bucket_name
+        - '{{$.inputs.parameters[''bucket_name'']}}'
+        - --file_name
+        - '{{$.inputs.parameters[''file_name'']}}'
+        - --data_output_path
+        - '{{$.outputs.artifacts[''data_output''].path}}'
+        image: svromankov/read-minio-data:latest
+    exec-retrieve-features-from-feast:
+      container:
+        command:
+        - python3
+        - /app/src/retrieve_features/retrieve_features.py
+        - --minio_host
+        - '{{$.inputs.parameters[''minio_host'']}}'
+        - --access_key
+        - '{{$.inputs.parameters[''access_key'']}}'
+        - --secret_key
+        - '{{$.inputs.parameters[''secret_key'']}}'
+        - --bucket_name
+        - '{{$.inputs.parameters[''bucket_name'']}}'
+        - --file_name
+        - '{{$.inputs.parameters[''file_name'']}}'
+        - --entity_df
+        - '{{$.inputs.artifacts[''entity_df''].path}}'
+        - --feature_list
+        - '{{$.inputs.parameters[''feature_list'']}}'
+        - --data_output
+        - '{{$.outputs.artifacts[''data_output''].path}}'
+        image: svromankov/retrieve-feast-features:latest
+    exec-write-data-to-minio:
+      container:
+        args:
+        - --minio_host
+        - '{{$.inputs.parameters[''minio_host'']}}'
+        - --access_key
+        - '{{$.inputs.parameters[''access_key'']}}'
+        - --secret_key
+        - '{{$.inputs.parameters[''secret_key'']}}'
+        - --bucket_name
+        - '{{$.inputs.parameters[''bucket_name'']}}'
+        - --file_name
+        - '{{$.inputs.parameters[''file_name'']}}'
+        - --input_data_path
+        - '{{$.inputs.artifacts[''input_data''].path}}'
+        command:
+        - python3
+        - /app/src/write_data/write_data.py
+        image: varunmallya/write-minio-data:latest
+pipelineInfo:
+  description: A Kubeflow pipeline to classify income categories using KFP v2
+  name: income-classifier-pipeline
+root:
+  dag:
+    tasks:
+      model-inference:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-model-inference
+        dependentTasks:
+        - retrieve-features-from-feast
+        inputs:
+          artifacts:
+            input_data:
+              taskOutputArtifact:
+                outputArtifactKey: data_output
+                producerTask: retrieve-features-from-feast
+          parameters:
+            access_key:
+              componentInputParameter: access_key
+            minio_host:
+              componentInputParameter: minio_host
+            mlflow_host:
+              componentInputParameter: mlflow_host
+            model_name:
+              componentInputParameter: model_name
+            model_stage:
+              componentInputParameter: model_stage
+            model_type:
+              componentInputParameter: model_type
+            secret_key:
+              componentInputParameter: secret_key
+        taskInfo:
+          name: model-inference
+      read-data-from-minio:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-read-data-from-minio
+        inputs:
+          parameters:
+            access_key:
+              componentInputParameter: access_key
+            bucket_name:
+              componentInputParameter: entity_df_bucket
+            file_name:
+              componentInputParameter: entity_df_filename
+            minio_host:
+              componentInputParameter: minio_host
+            secret_key:
+              componentInputParameter: secret_key
+        taskInfo:
+          name: read-data-from-minio
+      retrieve-features-from-feast:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-retrieve-features-from-feast
+        dependentTasks:
+        - read-data-from-minio
+        inputs:
+          artifacts:
+            entity_df:
+              taskOutputArtifact:
+                outputArtifactKey: data_output
+                producerTask: read-data-from-minio
+          parameters:
+            access_key:
+              componentInputParameter: access_key
+            bucket_name:
+              componentInputParameter: feature_store_bucket_name
+            feature_list:
+              componentInputParameter: feature_list
+            file_name:
+              componentInputParameter: feature_store_config_file_name
+            minio_host:
+              componentInputParameter: minio_host
+            secret_key:
+              componentInputParameter: secret_key
+        taskInfo:
+          name: retrieve-features-from-feast
+      write-data-to-minio:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-write-data-to-minio
+        dependentTasks:
+        - model-inference
+        inputs:
+          artifacts:
+            input_data:
+              taskOutputArtifact:
+                outputArtifactKey: data_output
+                producerTask: model-inference
+          parameters:
+            access_key:
+              componentInputParameter: access_key
+            bucket_name:
+              componentInputParameter: output_bucket
+            file_name:
+              componentInputParameter: output_file_name
+            minio_host:
+              componentInputParameter: minio_host
+            secret_key:
+              componentInputParameter: secret_key
+        taskInfo:
+          name: write-data-to-minio
+  inputDefinitions:
+    parameters:
+      access_key:
+        parameterType: STRING
+      entity_df_bucket:
+        parameterType: STRING
+      entity_df_filename:
+        parameterType: STRING
+      feature_list:
+        parameterType: STRING
+      feature_store_bucket_name:
+        parameterType: STRING
+      feature_store_config_file_name:
+        parameterType: STRING
+      minio_host:
+        parameterType: STRING
+      mlflow_host:
+        parameterType: STRING
+      model_name:
+        parameterType: STRING
+      model_stage:
+        parameterType: STRING
+      model_type:
+        parameterType: STRING
+      output_bucket:
+        parameterType: STRING
+      output_file_name:
+        parameterType: STRING
+      secret_key:
+        parameterType: STRING
+schemaVersion: 2.1.0
+sdkVersion: kfp-2.9.0

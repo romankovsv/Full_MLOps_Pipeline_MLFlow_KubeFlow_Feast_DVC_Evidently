@@ -1,0 +1,41 @@
+name: Write Data To Minio
+description: Writes data back to MinIO
+inputs:
+  - name: minio_host
+    type: STRING
+    description: The MinIO host address.
+  - name: access_key
+    type: STRING
+    description: Access key for MinIO.
+  - name: secret_key
+    type: STRING
+    description: Secret key for MinIO.
+  - name: bucket_name
+    type: STRING
+    description: Name of the bucket in MinIO.
+  - name: file_name
+    type: STRING
+    description: Name of the file to write to MinIO.
+  - name: input_data
+    type: Artifact  # Updated for KFP v2
+    description: Path to the input data file.
+
+implementation:
+  container:
+    image: 'abrikos/write-minio-data:latest'
+    command:
+      - python3
+      - /app/src/write_data/write_data.py
+    args:
+      - --minio_host
+      - {inputValue: minio_host}
+      - --access_key
+      - {inputValue: access_key}
+      - --secret_key
+      - {inputValue: secret_key}
+      - --bucket_name
+      - {inputValue: bucket_name}
+      - --file_name
+      - {inputValue: file_name}
+      - --input_data_path
+      - {inputPath: input_data}

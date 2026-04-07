@@ -98,17 +98,20 @@ dvc remote modify minio use_ssl false
 
 
 HOW TO START LATEST:
-colima start --arch x86_64 --vm-type qemu --cpu 7 --memory 13 --disk 20
+colima start --arch x86_64 --vm-type qemu --cpu 8 --memory 14 --disk 25
 
 k3d cluster create mlops \
   --agents 1 \
   --servers 1 \
   --agents-memory 8g \
+  --servers-memory 4g \
+  -p "5001:5000@server:0:direct" \
+  -p "8383:80@server:0:direct" \
+  -p "9000:9000@server:0:direct" \
+  -p "9001:9001@server:0:direct" \
   --no-lb \
-  -p "5001:5000@server:0" \
-  -p "8080:80@server:0" \
-  -p "9000:9000@server:0" \
-  -p "9001:9001@server:0"
+  --k3s-arg "--disable=traefik@server:0" \
+  --timeout 5m
 
 !!!Then patch MLflow service to NodePort and it's accessible at localhost:5001 without any port-forward
 
@@ -187,8 +190,8 @@ kubectl set resources deployment controller-manager -n kubeflow \
 
 kubectl get pods -n kubeflow -w
 
-export AWS_ACCESS_KEY_ID=admin
-export AWS_SECRET_ACCESS_KEY=admin12345
+export AWS_ACCESS_KEY_ID=
+export AWS_SECRET_ACCESS_KEY=
 export MLFLOW_S3_ENDPOINT_URL=http://127.0.0.1:9000
 export AWS_ENDPOINT_URL=http://127.0.0.1:9000
 

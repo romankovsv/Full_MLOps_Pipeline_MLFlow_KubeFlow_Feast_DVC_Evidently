@@ -1,0 +1,48 @@
+name: Model Inference
+description: Run model inference after retrieving the model from MLflow
+inputs:
+- name: minio_host
+  type: String
+- name: access_key
+  type: String
+- name: secret_key
+  type: String
+- name: model_name
+  type: STRING
+- name: model_type
+  type: STRING
+- name: model_stage
+  type: STRING
+- name: mlflow_host
+  type: STRING
+- name: input_data
+  type: Dataset  # Updated for KFP v2 to indicate an artifact input
+
+outputs:
+- name: data_output
+  type: Dataset  # Updated for KFP v2 to indicate an artifact output
+
+implementation:
+  container:
+    image: 'abrikos/run-inference:latest' 
+    command:
+    - python3
+    - /app/src/run_inference/run_inference.py
+    - --minio_host
+    - {inputValue: minio_host}
+    - --access_key
+    - {inputValue: access_key}
+    - --secret_key
+    - {inputValue: secret_key}
+    - --model_name
+    - {inputValue: model_name}
+    - --model_type
+    - {inputValue: model_type}
+    - --model_stage
+    - {inputValue: model_stage}
+    - --mlflow_host
+    - {inputValue: mlflow_host}
+    - --input_data
+    - {inputPath: input_data}  # Updated for KFP v2 artifact handling
+    - --data_output
+    - {outputPath: data_output}  # Updated for KFP v2 artifact handling

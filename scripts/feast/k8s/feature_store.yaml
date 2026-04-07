@@ -1,0 +1,12 @@
+project: mlops_project
+registry:
+  registry_store_type: S3RegistryStore
+  path: s3://feast-registry/registry.db
+  s3_endpoint_override: s3://feature-registry/registry.db
+provider: aws
+offline_store:
+  type: file 
+online_store:
+  type: redis
+  connection_string: "redis-deployment-master.redis.svc.cluster.local:6379,password=jGFUi48jvD"
+entity_key_serialization_version: 3
